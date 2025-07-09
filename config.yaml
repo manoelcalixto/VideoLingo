@@ -30,6 +30,8 @@ whisper:
   # Whisper specified recognition language ISO 639-1
   language: 'en'
   detected_language: 'en'
+  # NEW: Number of speakers for diarization. 0 = auto-detect
+  num_speakers: 0
   # Whisper running mode ["local", "cloud", "elevenlabs"]. Specifies where to run, cloud uses 302.ai API
   runtime: 'local'
   # 302.ai API key
@@ -110,6 +112,9 @@ sf_cosyvoice2:
 # Edge TTS configuration
 edge_tts:
   voice: 'zh-CN-XiaoxiaoNeural'
+  # NEW: Voices list for multi-speaker dubbing (index correlates to speaker_id 0-based)
+  voices:
+    - 'zh-CN-XiaoxiaoNeural'
 
 # SoVITS configuration
 gpt_sovits:

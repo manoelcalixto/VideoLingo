@@ -1,5 +1,5 @@
 from pathlib import Path
-import edge_tts
+# import edge_tts as edge_tts_mod  # opcional: para futura expansão
 from core.utils import *
 import subprocess
 
@@ -12,10 +12,17 @@ import subprocess
 # zh-CN-XiaoxiaoNeural - Female
 # zh-CN-YunxiNeural - Male
 # zh-CN-XiaoyiNeural - Female
-def edge_tts(text, save_path):
+def edge_tts(text, save_path, speaker_id=None):
     # Load settings from config file
     edge_set = load_key("edge_tts")
-    voice = edge_set.get("voice", "en-US-JennyNeural")
+
+    voices_list = edge_set.get("voices", [])
+    # If we have a speaker_id and a voices list, pick corresponding voice
+    if speaker_id is not None and isinstance(voices_list, list) and len(voices_list) > speaker_id:
+        voice = voices_list[speaker_id]
+    else:
+        # fallback to single voice config
+        voice = edge_set.get("voice", "en-US-JennyNeural")
     
     # Create output directory if it doesn't exist
     speech_file_path = Path(save_path)

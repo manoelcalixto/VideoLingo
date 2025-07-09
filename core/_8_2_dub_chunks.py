@@ -152,6 +152,8 @@ def gen_dub_chunks():
         lines = [line.strip() for line in block.split('\n') if line.strip()]
         if len(lines) >= 3:
             text = ' '.join(lines[2:])
+            # Remove prefixo de locutor, ex: spk1:
+            text = re.sub(r'^spk\d+:\s*', '', text, flags=re.IGNORECASE)
             text = re.sub(r'\([^)]*\)|（[^）]*）', '', text).strip().replace('-', '')
             content_lines.append(text)
             
@@ -160,6 +162,7 @@ def gen_dub_chunks():
         lines = [line.strip() for line in block.split('\n') if line.strip()]
         if len(lines) >= 3:
             text = ' '.join(lines[2:])
+            text = re.sub(r'^spk\d+:\s*', '', text, flags=re.IGNORECASE)
             text = re.sub(r'\([^)]*\)|（[^）]*）', '', text).strip().replace('-', '')
             ori_content_lines.append(text)
 

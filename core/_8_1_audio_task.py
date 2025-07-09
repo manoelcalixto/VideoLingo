@@ -81,7 +81,17 @@ def process_srt():
             start_time = datetime.datetime.strptime(start_time, '%H:%M:%S,%f').time()
             end_time = datetime.datetime.strptime(end_time, '%H:%M:%S,%f').time()
             duration = time_diff_seconds(start_time, end_time, datetime.date.today())
-            text = ' '.join(lines[2:])
+            raw_text = ' '.join(lines[2:])
+
+            # Detecta prefixo de locutor no formato spkN:
+            speaker_match = re.match(r'spk(\d+):\s*(.*)', raw_text, re.IGNORECASE)
+            if speaker_match:
+                speaker_id = int(speaker_match.group(1))
+                text = speaker_match.group(2)
+            else:
+                speaker_id = None
+
+            text = text if 'text' in locals() else raw_text
             # Remove content within parentheses (including English and Chinese parentheses)
             text = re.sub(r'\([^)]*\)', '', text).strip()
             text = re.sub(r'（[^）]*）', '', text).strip()
@@ -91,11 +101,15 @@ def process_srt():
             # Add the original text from src_subs_for_audio.srt
             origin = src_subtitles.get(number, '')
 
+            # default None for speaker_id if not set
+            if speaker_id is None:
+                speaker_id = 0
+
         except ValueError as e:
             rprint(Panel(f"Unable to parse subtitle block '{block}', error: {str(e)}, skipping this subtitle block.", title="Error", border_style="red"))
             continue
-        
-        subtitles.append({'number': number, 'start_time': start_time, 'end_time': end_time, 'duration': duration, 'text': text, 'origin': origin})
+
+        subtitles.append({'number': number, 'start_time': start_time, 'end_time': end_time, 'duration': duration, 'text': text, 'origin': origin, 'speaker_id': speaker_id})
     
     df = pd.DataFrame(subtitles)
     

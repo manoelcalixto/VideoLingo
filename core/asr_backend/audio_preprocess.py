@@ -87,15 +87,19 @@ def split_audio(audio_file: str, target_len: float = 30*60, win: float = 60) -> 
 def process_transcription(result: Dict) -> pd.DataFrame:
     all_words = []
     for segment in result['segments']:
-        # Get speaker_id, if not exists, set to None
-        speaker_id = segment.get('speaker_id', None)
+        # speaker_id pode estar no segmento (ElevenLabs) ou em cada palavra (WhisperX diarization)
+        segment_speaker = segment.get('speaker_id', None)
         
         for word in segment['words']:
             # Check word length
             if len(word["word"]) > 30:
                 rprint(f"[yellow]⚠️ Warning: Detected word longer than 30 characters, skipping: {word['word']}[/yellow]")
                 continue
-                
+            # Tenta obter speaker_id específico da palavra, fallback para segment_speaker
+            word_speaker = word.get('speaker_id') if 'speaker_id' in word else word.get('speaker')
+            if word_speaker is None:
+                word_speaker = segment_speaker
+
             # ! For French, we need to convert guillemets to empty strings
             word["word"] = word["word"].replace('»', '').replace('«', '')
             
@@ -106,7 +110,7 @@ def process_transcription(result: Dict) -> pd.DataFrame:
                         'text': word["word"],
                         'start': all_words[-1]['end'],
                         'end': all_words[-1]['end'],
-                        'speaker_id': speaker_id
+                        'speaker_id': word_speaker
                     }
                     all_words.append(word_dict)
                 else:
@@ -117,7 +121,7 @@ def process_transcription(result: Dict) -> pd.DataFrame:
                             'text': word["word"],
                             'start': next_word["start"],
                             'end': next_word["end"],
-                            'speaker_id': speaker_id
+                            'speaker_id': word_speaker
                         }
                         all_words.append(word_dict)
                     else:
@@ -128,7 +132,7 @@ def process_transcription(result: Dict) -> pd.DataFrame:
                     'text': f'{word["word"]}',
                     'start': word.get('start', all_words[-1]['end'] if all_words else 0),
                     'end': word['end'],
-                    'speaker_id': speaker_id
+                    'speaker_id': word_speaker
                 }
                 
                 all_words.append(word_dict)

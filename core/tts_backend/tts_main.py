@@ -22,7 +22,7 @@ def clean_text_for_tts(text):
         text = text.replace(char, '')
     return text.strip()
 
-def tts_main(text, save_as, number, task_df):
+def tts_main(text, save_as, number, task_df, speaker_id=None):
     text = clean_text_for_tts(text)
     # Check if text is empty or single character, single character voiceovers are prone to bugs
     cleaned_text = re.sub(r'[^\w\s]', '', text).strip()
@@ -57,7 +57,7 @@ def tts_main(text, save_as, number, task_df):
             elif TTS_METHOD == 'sf_fish_tts':
                 siliconflow_fish_tts_for_videolingo(text, save_as, number, task_df)
             elif TTS_METHOD == 'edge_tts':
-                edge_tts(text, save_as)
+                edge_tts(text, save_as, speaker_id)
             elif TTS_METHOD == 'custom_tts':
                 custom_tts(text, save_as)
             elif TTS_METHOD == 'sf_cosyvoice2':

@@ -84,6 +84,18 @@ def page_setting():
             update_key("burn_subtitles", burn_subtitles)
             st.rerun()
     with st.expander(t("Dubbing Settings"), expanded=True):
+        # Número de falantes para diarização e TTS
+        num_speakers = st.number_input(
+            t("Number of Speakers"),
+            min_value=0,
+            max_value=10,
+            value=load_key("whisper.num_speakers"),
+            step=1
+        )
+        if num_speakers != load_key("whisper.num_speakers"):
+            update_key("whisper.num_speakers", int(num_speakers))
+            st.rerun()
+
         tts_methods = ["azure_tts", "openai_tts", "fish_tts", "sf_fish_tts", "edge_tts", "gpt_sovits", "custom_tts", "sf_cosyvoice2", "f5tts"]
         select_tts = st.selectbox(t("TTS Method"), options=tts_methods, index=tts_methods.index(load_key("tts_method")))
         if select_tts != load_key("tts_method"):
@@ -144,7 +156,32 @@ def page_setting():
                 st.rerun()
                 
         elif select_tts == "edge_tts":
-            config_input(t("Edge TTS Voice"), "edge_tts.voice")
+            # Carrega lista de vozes existente ou cria padrão
+            try:
+                voices_list = load_key("edge_tts.voices")
+                if not isinstance(voices_list, list):
+                    voices_list = [str(voices_list)]
+            except KeyError:
+                voices_list = [load_key("edge_tts.voice")]
+
+            # Garante que o tamanho da lista seja igual ao número de falantes
+            if len(voices_list) < num_speakers:
+                voices_list += [voices_list[0]] * (num_speakers - len(voices_list))
+            elif len(voices_list) > num_speakers:
+                voices_list = voices_list[:num_speakers]
+
+            new_voices = []
+            for idx in range(num_speakers):
+                voice_val = st.text_input(f"{t('Edge TTS Voice')} {idx+1}", value=voices_list[idx])
+                new_voices.append(voice_val)
+
+            # Atualiza configuração se houver alteração
+            if new_voices != voices_list:
+                update_key("edge_tts.voices", new_voices)
+                # mantém chave legacy `voice` como primeira voz
+                if new_voices:
+                    update_key("edge_tts.voice", new_voices[0])
+                st.rerun()
 
         elif select_tts == "sf_cosyvoice2":
             config_input(t("SiliconFlow API Key"), "sf_cosyvoice2.api_key")

@@ -110,6 +110,31 @@ def transcribe_audio(raw_audio_file, vocal_audio_file, start, end):
     torch.cuda.empty_cache()
     del model_a
 
+    # -------------------------
+    # 3. Speaker diarization (optional)
+    # -------------------------
+    try:
+        num_speakers = load_key("whisper.num_speakers")
+    except Exception:
+        num_speakers = 0
+
+    if num_speakers is None:
+        num_speakers = 0
+
+    try:
+        rprint("[blue]🔍 Starting speaker diarization...[/blue]")
+        diar_start = time.time()
+        diarize_model = whisperx.DiarizationPipeline(device=device)
+        if num_speakers and int(num_speakers) > 0:
+            diar_segments = diarize_model(vocal_audio_file, min_speakers=int(num_speakers), max_speakers=int(num_speakers))
+        else:
+            diar_segments = diarize_model(vocal_audio_file)
+
+        result = whisperx.assign_word_speakers(diar_segments, result)
+        rprint(f"[green]🔈 Speaker diarization completed in {time.time() - diar_start:.2f}s[/green]")
+    except Exception as e:
+        rprint(f"[yellow]⚠️ Speaker diarization skipped due to error: {e}[/yellow]")
+
     # Adjust timestamps
     for segment in result['segments']:
         segment['start'] += start
